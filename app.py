@@ -10,7 +10,7 @@ class InferenceRequest(BaseModel):
     mode: str = "best"
     best_max_flavors: int = 4
 
-@app.post("/interrogate")
+@app.post("/clipi2")
 def run_clip(req: InferenceRequest):
     result = client.predict(
         image_url=req.image_url,
@@ -19,3 +19,6 @@ def run_clip(req: InferenceRequest):
         api_name="/clipi2"
     )
     return {"result": result}
+
+
+
