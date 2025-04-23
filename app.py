@@ -31,11 +31,11 @@ class InferenceBase64Request(BaseModel):
 def run_clip_base64(req: InferenceBase64Request):
     try:
         result = client.predict(
-            image_base64=req.image_base64,
-            mode=req.mode,
-            best_max_flavors=req.best_max_flavors,
-            api_name="/clipi2_from_base64"  # ✅ 呼叫你 Gradio Space 的 base64 API
-        )
+    req.image_base64,     # ✅ 第一個 input：image base64 string
+    req.mode,             # ✅ 第二個 input
+    req.best_max_flavors, # ✅ 第三個 input
+    api_name="/clipi2_from_base64"
+)
         return {"result": result}
     except Exception as e:
         return {"error": str(e)}
