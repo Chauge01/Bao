@@ -13,6 +13,14 @@ app = FastAPI()
 api = AppPixivAPI()
 api.auth(refresh_token=REFRESH_TOKEN)
 
+headers = {
+    "Referer": "https://www.pixiv.net/",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+}
+
+
 @app.get("/search_illust")
 def search_illust(
     word: str = Query(..., description="搜尋關鍵字"),
@@ -38,7 +46,6 @@ def search_illust(
 
             # 優先使用 medium 版本（穩定格式），避免 WebP / forbidden
             image_url = i.image_urls.medium
-            headers = {"Referer": "https://www.pixiv.net/"}
 
             try:
                 image_response = requests.get(image_url, headers=headers, timeout=15)
