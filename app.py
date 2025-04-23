@@ -1,11 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from pixivpy3 import AppPixivAPI
-import requests
-import base64
-import os
 from dotenv import load_dotenv
+import os
 
-# 讀取 .env 的 refresh_token
 load_dotenv()
 REFRESH_TOKEN = os.getenv("PIXIV_REFRESH_TOKEN")
 
@@ -13,32 +10,53 @@ app = FastAPI()
 api = AppPixivAPI()
 api.auth(refresh_token=REFRESH_TOKEN)
 
-@app.get("/")
-def root():
-    return {"message": "PixivPy API is working!"}
+@app.get("/search_illust")
+def search_illust(
+    word: str = Query(..., description="搜尋關鍵字"),
+    max_pages: int = Query(30, description="最多翻頁數，預設 30 頁")
+):
+    all_results = []
+    result = api.search_illust(
+        word,
+        search_target="partial_match_for_tags",
+        sort="date_desc"
+    )
 
-@app.get("/illust/{illust_id}")
-def get_illust_info(illust_id: int):
-    try:
-        result = api.illust_detail(illust_id)
-        illust = result.illust
+    current_page = 1
+    while current_page <= max_pages and result.illusts:
+        print(f"📄 抓取第 {current_page} 頁，共 {len(result.illusts)} 張")
 
-        # 圖片網址
-        image_url = illust.image_urls.large
+        for i in result.illusts:
+            if not hasattr(i, "image_urls") or not hasattr(i.image_urls, "large"):
+                continue
 
-        # 抓圖並轉成 base64
-        headers = {"Referer": "https://www.pixiv.net/"}
-        image_response = requests.get(image_url, headers=headers)
-        image_base64 = base64.b64encode(image_response.content).decode("utf-8")
+            # 嘗試取得原圖（不是每張都有）
+            original_url = None
+            if hasattr(i, "meta_single_page") and i.meta_single_page:
+                original_url = i.meta_single_page.get("original_image_url")
 
-        return {
-            "illust_id": illust_id,
-            "title": illust.title,
-            "tags": [tag.name for tag in illust.tags],
-            "image_url": image_url,
-            "image_base64": f"data:image/jpeg;base64,{image_base64}"
-        }
-    except Exception as e:
-        return {"error": str(e)}
+            all_results.append({
+                "illust_id": i.id,
+                "title": i.title,
+                "tags": [t.name for t in i.tags],
+                "image_url_large": i.image_urls.large,  # 建議送 CLIP 用這個
+                "image_url_medium": i.image_urls.medium,
+                "image_url_square": i.image_urls.square_medium,
+                "original_url": original_url,
+                "user_name": i.user.name
+            })
+
+        next_qs = api.parse_qs(result.next_url)
+        if not next_qs:
+            break
+
+        result = api.search_illust(**next_qs)
+        current_page += 1
+
+    return {
+        "keyword": word,
+        "total_images": len(all_results),
+        "images": all_results
+    }
 
 
