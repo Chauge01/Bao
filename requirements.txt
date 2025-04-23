@@ -1,3 +1,5 @@
 fastapi
+pixivpy3
 uvicorn
-gradio_client
+python-dotenv
+requests
