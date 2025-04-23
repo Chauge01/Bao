@@ -16,7 +16,7 @@ api.auth(refresh_token=REFRESH_TOKEN)
 @app.get("/search_illust")
 def search_illust(
     word: str = Query(..., description="搜尋關鍵字"),
-    max_pages: int = Query(30, description="最多翻頁數，預設 30 頁")
+    max_pages: int = Query(50, description="最多翻頁數，預設 30 頁")
 ):
     all_results = []
 
@@ -40,7 +40,7 @@ def search_illust(
             headers = {"Referer": "https://www.pixiv.net/"}
 
             try:
-                image_response = requests.get(image_url, headers=headers, timeout=10)
+                image_response = requests.get(image_url, headers=headers, timeout=15)
                 if image_response.status_code == 200:
                     image_base64 = base64.b64encode(image_response.content).decode("utf-8")
                     image_base64_data = f"data:image/jpeg;base64,{image_base64}"
