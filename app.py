@@ -71,7 +71,7 @@ def search_illust(
         if not next_qs:
             break
 
-        time.sleep(2)  # ⭐ 為了避免連太快被擋
+        time.sleep(4)  # ⭐ 為了避免連太快被擋
         result = api.search_illust(**next_qs)
         current_page += 1
 
