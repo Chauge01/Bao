@@ -1,5 +1,3 @@
 fastapi
-pixivpy3
 uvicorn
-python-dotenv
 requests
