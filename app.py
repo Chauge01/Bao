@@ -27,7 +27,7 @@ def image_proxy(
             return Response(content=res.content, media_type=content_type)
 
         elif res.status_code == 403:
-            return Response(content=b"403 Forbidden (可能 Pixiv 擋 IP 或需 cookie)", status_code=403)
+            return Response(content=b"403 Forbidden", status_code=403)
 
         elif res.status_code == 404:
             return Response(content=b"Image not found", status_code=404)
