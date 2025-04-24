@@ -1,44 +1,46 @@
-from fastapi import FastAPI
-from pixivpy3 import AppPixivAPI
+from fastapi import FastAPI, Query
+from fastapi.responses import Response
 import requests
-import base64
-import os
-from dotenv import load_dotenv
-
-# 讀取 .env 的 refresh_token
-load_dotenv()
-REFRESH_TOKEN = os.getenv("PIXIV_REFRESH_TOKEN")
 
 app = FastAPI()
-api = AppPixivAPI()
-api.auth(refresh_token=REFRESH_TOKEN)
 
-@app.get("/")
-def root():
-    return {"message": "PixivPy API is working!"}
+@app.get("/image_proxy")
+def image_proxy(
+    pixiv_url: str = Query(..., description="Pixiv 圖片 URL")
+):
+    headers = {
+        "Referer": "https://www.pixiv.net/",
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/123.0.0.0 Safari/537.36"
+        ),
+        "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8"
+    }
 
-@app.get("/illust/{illust_id}")
-def get_illust_info(illust_id: int):
     try:
-        result = api.illust_detail(illust_id)
-        illust = result.illust
+        res = requests.get(pixiv_url, headers=headers, timeout=15)
 
-        # 圖片網址
-        image_url = illust.image_urls.large
+        if res.status_code == 200:
+            # 自動判斷格式，避免 media_type 固定寫死 image/jpeg
+            content_type = res.headers.get("Content-Type", "image/jpeg")
+            return Response(content=res.content, media_type=content_type)
 
-        # 抓圖並轉成 base64
-        headers = {"Referer": "https://www.pixiv.net/"}
-        image_response = requests.get(image_url, headers=headers)
-        image_base64 = base64.b64encode(image_response.content).decode("utf-8")
+        elif res.status_code == 403:
+            return Response(content=b"403 Forbidden (可能 Pixiv 擋 IP 或需 cookie)", status_code=403)
 
-        return {
-            "illust_id": illust_id,
-            "title": illust.title,
-            "tags": [tag.name for tag in illust.tags],
-            "image_url": image_url,
-            "image_base64": f"data:image/jpeg;base64,{image_base64}"
-        }
-    except Exception as e:
-        return {"error": str(e)}
+        elif res.status_code == 404:
+            return Response(content=b"Image not found", status_code=404)
 
+        else:
+            return Response(
+                content=f"Unexpected error. Status: {res.status_code}".encode(),
+                status_code=res.status_code
+            )
+
+    except requests.exceptions.RequestException as e:
+        return Response(
+            content=f"Request exception: {str(e)}".encode(),
+            status_code=500
+        )
 
