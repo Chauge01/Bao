@@ -71,14 +71,16 @@ def search_illust(
                 "image_url_medium": i.image_urls.medium,
                 "image_url_large": i.image_urls.large,
                 "image_url_square": i.image_urls.square_medium,
-                "image_base64": image_base64_data,
                 "original_url": original_url,
-                "user_name": i.user.name
+                "user_name": i.user.name,
+                "page_url": f"https://www.pixiv.net/en/artworks/{i.id}" 
             })
 
         next_qs = api.parse_qs(result.next_url)
         if not next_qs:
             break
+
+        #     "image_base64": image_base64_data, 先拿掉 檔案太大，但之後可以放回來～
 
         time.sleep(4)
         result = api.search_illust(**next_qs)
