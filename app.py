@@ -41,4 +41,5 @@ def get_illust_info(illust_id: int):
     except Exception as e:
         return {"error": str(e)}
 
+#250512 更
 
