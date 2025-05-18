@@ -42,4 +42,5 @@ def get_illust_info(illust_id: int):
         return {"error": str(e)}
 
 #250512 更
+#250518 更
 
